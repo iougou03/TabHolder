@@ -1,4 +1,40 @@
-const folderBox= document.getElementById("folderBox");
+import {createFolder} from "./folder.js";
+import {getBoard} from "./board.js";
+
+function getWindows(){
+  chrome.windows.getAll({populate:true}, (windows)=>{
+    windows.forEach(window=> {
+      createFolder(window.id);
+    });
+  })
+}
+
+function addWindowEventListener(){
+  chrome.windows.onCreated.addListener(function(window){
+    handleOpen(window.id);
+  });
+
+  chrome.windows.onRemoved.addListener(function(windowId){
+    handleClose(windowId);
+  })
+}
+
+function handleOpen(windowId){
+  createFolder(windowId);
+}
+function handleClose(windowId){
+  document.getElementById(windowId).remove();
+}
+
+function init(){
+  getWindows();
+  getBoard();
+  addWindowEventListener();
+}
+
+init();
+
+
 
 // chrome.tabs.query({},(tab)=>{
 //   tab.forEach(element => {
@@ -6,43 +42,7 @@ const folderBox= document.getElementById("folderBox");
 //     console.log(element.url);
 //   });
 // })
-
-function getWindows(){
-  
-  chrome.windows.getAll({populate:true}, (windows)=>{
-    windows.forEach(window=> {
-      console.log(window);
-      createFolder(window);
-    });
-
-  })
-
-  
-}
-
-function createFolder(window){
-  let windowId = window.id;
-  let thumbNailDiv = document.createElement('div');
-  thumbNailDiv.id="thumbNail"; 
-
-  let thumbNail = document.createElement('img');
-  chrome.tabs.captureVisibleTab(windowId,(dataURL)=>{
-    thumbNail.src = dataURL;
-    thumbNail.alt = "URL image";
-  });
-
-  thumbNailDiv.appendChild(thumbNail);
-  
-  folderBox.appendChild (thumbNailDiv);
-}
-
 // chrome.tabs.captureVisibleTab((dataURL)=>{
 //   // console.log(dataURL);
 //   thumbNail.children[0].src = dataURL;
 // })
-
-function init(){
-  getWindows();
-}
-
-init();
