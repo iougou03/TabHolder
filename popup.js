@@ -1,4 +1,4 @@
-import {createFolder} from "./folder.js";
+import {createFolder,updateThumbnail} from "./folder.js";
 import {getBoard} from "./board.js";
 
 function getWindows(){
@@ -17,6 +17,10 @@ function addWindowEventListener(){
   chrome.windows.onRemoved.addListener(function(windowId){
     handleClose(windowId);
   })
+
+  // chrome.windows.onFocusChanged.addListener(function(windowId){
+  //   handleFocus(windowId);
+  // })
 }
 
 function handleOpen(windowId){
@@ -24,6 +28,11 @@ function handleOpen(windowId){
 }
 function handleClose(windowId){
   document.getElementById(windowId).remove();
+}
+function handleFocus(windowId){
+  let div = document.getElementById(windowId);
+  console.log(windowId,div.children[1]);
+  updateThumbnail(windowId,div.children[1]);
 }
 
 function init(){

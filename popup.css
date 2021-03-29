@@ -8,13 +8,18 @@
     border: black solid 1px;
 }
 
-#folderBox{
+.folderBox{
     display: grid;
     grid-template-columns: auto auto;
     gap:10px 10px;
 }
+
 .thumbNail{
+    width: 120px;
+    height: 90px;
     position: relative;
+    cursor: pointer;
+    transition: ease 0.5s;
 }
 
 .thumbNailClose{
@@ -31,4 +36,39 @@
     opacity: 0;
     top:-5px;
     left:-5px;
+}
+
+.darker{
+    transition : 0.5s ease;
+    filter: brightness(40%);
+}
+
+.hold{
+    border: solid rgba(114, 110, 110, 0.842) 4px;
+}
+.invisible{
+    display: none;
+}
+#alertDivBack{
+    position: absolute;
+    z-index: 1;
+    background-color:rgb(0,0,0,0.5);
+    width: 100%;
+    height: 100%;
+    padding-top: 60%;
+    padding-left: 20%;
+    padding-right: 20%;
+    padding-bottom: 60%;
+    display: table;
+    /* vertical-align: middle; */
+}
+
+#alertDiv{
+    display: table-cell;
+    vertical-align: middle;
+    padding:10px;
+    border: 1px solid red;
+    text-align: center;
+    
+    background-color: wheat;
 }
