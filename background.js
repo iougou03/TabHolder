@@ -1,7 +1,5 @@
-chrome.runtime.onInstalled.addListener(function(details){
-    chrome.storage.sync.set({board:[]},()=>{
-        console.log(`board list has set!`);
-    });
-});
-
-// can't we invoke the app for other windows in the background?
+chrome.runtime.onInstalled.addListener(()=>{
+    chrome.storage.local.set({data:[]},()=>{
+        console.log("saved");
+    })
+})

@@ -1,16 +1,17 @@
 {
-    "name": "Hello World!",
-    "description": "first Extension!",
+    "name": "tabHolder",
+    "description": "You can manage your tabs and save them.",
     
     "version": "1.0",
     "manifest_version": 3,
     "background": {
       "service_worker": "background.js"
     },
-    "permissions":["storage","tabs","activeTab","storage"],
+
+    "permissions":["tabs","storage"],
 
     "action":{
-      "default_popup":"popup.html",
+      "default_popup":"board.html",
       "default_icon":{
         "16": "/images/tabHolder16.png",
         "32": "/images/tabHolder32.png",
@@ -24,6 +25,5 @@
       "32": "/images/tabHolder32.png",
       "48": "/images/tabHolder48.png",
       "128": "/images/tabHolder128.png" 
-    },
-    "options_page":"options.html"
+    }
 }
