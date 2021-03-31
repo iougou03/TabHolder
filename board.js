@@ -22,44 +22,76 @@ function getWindows(){
 }
 
 function getSavedWindows(){
-    chrome.storage.local.get(['data'],result=>{
-        console.log(result);
-    })
+    return new Promise(resolve=>{
+        chrome.storage.local.get(['data'],({data})=>{
+            resolve(data);
+        })
+    });
 }
 
 export function makeContainer(windowId,tabs,mode=true){ //if true, make with saved urls
-    let first =tabs.shift()
+    let first;
     let tabList = [];
 
     if (mode){
-
+        chrome.tabs.query({url:tabs.urlList[0]},title=>{
+            first = {
+                favIcon:tabs.favList[0],
+                url:tabs.urlList[0],
+                tabId:tabs.tabIdList[0],
+                index:0,
+                title
+            }
+            t = getTitle(tabs.urlList[0])
+            console.log(t)
+            console.log(first,title,t)
+        })
+        if(tabs.favList.length > 1){
+            for(let i=1;i<tabs.favList.length;i++){
+                chrome.tabs.query({url:first.url},title=>{
+                    tabList.push({
+                        favIcon:tabs.favList[i],
+                        url:tabs.urlList[i],
+                        tabId:tabs.tabIdList[i],
+                        index:i,
+                        title
+                    })
+                })
+            }
+        }
+        
     } else {
+        first =tabs.shift()
         if (!first.favIconUrl)
             first.favIconUrl = UNKNOWN_PATH;
         first ={
             favIcon:first.favIconUrl,
             url:first.url,
             title:first.title,
-            tabId:first.id
+            tabId:first.id,
+            index:0
         }
 
-        tabs.forEach(tab => {
+        tabs.forEach((tab,index) => {
+            index+=1;
             if (!tab.favIconUrl)
                 tab.favIconUrl = UNKNOWN_PATH;
 
             tabList.push({
                 favIcon:tab.favIconUrl,
                 url:tab.url,
-                tabId:tab.id
+                title:tab.title,
+                tabId:tab.id,
+                index
             });
         });
         // console.log(favicons,title,tabList);
     }
 
-    makeItem(windowId,first,tabList);
+    makeItem(windowId,first,tabList,mode);
 }
 
-function makeItem(windowId,first,tabList){
+function makeItem(windowId,first,tabList,mode){
     let div = document.createElement('div');
     div.className = 'item';
     div.id = windowId;
@@ -73,6 +105,7 @@ function makeItem(windowId,first,tabList){
     let favImg = document.createElement('img');
     favImg.id = first.tabId;
     favImg.className = 'favImg';
+    favImg.classList.add(first.index);
     favImg.alt = first.url;
     let itemTitle = document.createElement('p');
     itemTitle.className = 'itemTitle';
@@ -99,14 +132,17 @@ function makeItem(windowId,first,tabList){
     itemTitle.textContent = first.title;
     firstPage.appendChild(itemTitle);
 
-    tabList.forEach(({favIcon,tabId,url})=>{
-        let img = document.createElement('img');
-        img.className = 'favImg';
-        img.src = favIcon;
-        img.id = tabId;
-        img.alt = url;
-        otherPages.appendChild(img);
-    });
+    if (tabList){
+        tabList.forEach(({favIcon,tabId,url,index})=>{
+            let img = document.createElement('img');
+            img.className = 'favImg';
+            img.classList.add(index);
+            img.src = favIcon;
+            img.id = tabId;
+            img.alt = url;
+            otherPages.appendChild(img);
+        });
+    }
 
     div.appendChild(overlay);
     div.appendChild(firstPage);
@@ -116,7 +152,10 @@ function makeItem(windowId,first,tabList){
     div.addEventListener("mouseout",Events.handleItemHover);
     overlay.addEventListener("click",(ev)=>Events.handleItemClicked(ev,windowId))
 
-    container1.appendChild(div);
+    if (mode)
+        container2.appendChild(div);
+    else
+        container1.appendChild(div);
 }
 
 export function appendItem(windowId,tab){
@@ -134,7 +173,11 @@ function makeBoard(){
             makeContainer(windowId,tabs,false);
         })
     });
-    // getSavedWindows();
+    getSavedWindows().then(data=>{
+        data.forEach((element)=>{
+            makeContainer(element.windowId,element);
+        })
+    });
 }
 
 function init(){
@@ -142,5 +185,6 @@ function init(){
     Events.handleWindowEvent();
     Events.handleTabEvent();
 }
+
 
 init();
