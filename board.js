@@ -1,190 +1,146 @@
 import * as Events from "./event.js";
 
-export const UNKNOWN_PATH = "./images/unknown.png";
-const board = document.querySelector('.board');
-const container1 = document.getElementById('container1');
-const container2 = document.getElementById('container2');
+const UNKNOWN_PATH = "./images/unknown.png";
+const currentWindows = document.getElementById('currentWindows');
+const savedWindows = document.getElementById('savedWindows');
+let allWindows = {}; // allWindows[windowId] = {windowId,tabs}
 
-function getWindows(){
-    let windowList = [];    
-    
-    let promise = new Promise(resolve=>{
+async function getWindows(){  
+
+    return await new Promise(resolve=>{
         chrome.windows.getAll({populate:true},(windows)=>{     
             // console.log(windows)
-            windows.forEach(({id, tabs})=> {
-                windowList.push({windowId:id,tabs});
+            windows.forEach(({tabs,id})=> {
+                allWindows[String(id)] = {
+                    windowId:id,
+                    tabs:tabs
+                }
             });
-            resolve(windowList);
+            resolve("get Windows and saved");
         });
     })
-
-    return promise.then();
 }
 
-function getSavedWindows(){
-    return new Promise(resolve=>{
-        chrome.storage.local.get(['data'],({data})=>{
-            resolve(data);
+async function getSaved(){
+    return await new Promise(resolve=>{
+        chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
+            resolve(savedWindows);
         })
-    });
+    })
 }
 
-export function makeContainer(windowId,tabs,mode=true){ //if true, make with saved urls
-    let first;
-    let tabList = [];
-
-    if (mode){
-        chrome.tabs.query({url:tabs.urlList[0]},title=>{
-            first = {
-                favIcon:tabs.favList[0],
-                url:tabs.urlList[0],
-                tabId:tabs.tabIdList[0],
-                index:0,
-                title
-            }
-            t = getTitle(tabs.urlList[0])
-            console.log(t)
-            console.log(first,title,t)
-        })
-        if(tabs.favList.length > 1){
-            for(let i=1;i<tabs.favList.length;i++){
-                chrome.tabs.query({url:first.url},title=>{
-                    tabList.push({
-                        favIcon:tabs.favList[i],
-                        url:tabs.urlList[i],
-                        tabId:tabs.tabIdList[i],
-                        index:i,
-                        title
-                    })
-                })
-            }
-        }
-        
-    } else {
-        first =tabs.shift()
-        if (!first.favIconUrl)
-            first.favIconUrl = UNKNOWN_PATH;
-        first ={
-            favIcon:first.favIconUrl,
-            url:first.url,
-            title:first.title,
-            tabId:first.id,
-            index:0
-        }
-
-        tabs.forEach((tab,index) => {
-            index+=1;
-            if (!tab.favIconUrl)
-                tab.favIconUrl = UNKNOWN_PATH;
-
-            tabList.push({
-                favIcon:tab.favIconUrl,
-                url:tab.url,
-                title:tab.title,
-                tabId:tab.id,
-                index
-            });
-        });
-        // console.log(favicons,title,tabList);
+function makeItem(windowId,tabs,moved= false,saved=false){
+    // console.log(typeof(windowId),tabs);
+    let itemDiv;
+    if (!moved){
+        itemDiv = document.createElement('div');
+        itemDiv.id = windowId;
+        itemDiv.className = 'itemDiv';
+    } else{
+        itemDiv = document.getElementById(windowId);
+        itemDiv.textContent = '';
     }
+    let headerDiv;
+    let bodyDiv = document.createElement('div');
+    bodyDiv.className = 'bodyDiv';
 
-    makeItem(windowId,first,tabList,mode);
-}
+    tabs.forEach((tab,index)=>{
+        if(!tab.favIconUrl)
+            tab.favIconUrl = UNKNOWN_PATH;
+        if(index == 0)
+            headerDiv = makeHeader(tab.id,tab.favIconUrl,tab.title)
+        else{
+            let img = document.createElement('img');
+            img.id = String(tab.id)+'t'
+            img.className = 'favImg';
+            img.src = tab.favIconUrl;
+            img.alt = tab.title;
+            bodyDiv.appendChild(img);
+        }  
+    });
 
-function makeItem(windowId,first,tabList,mode){
-    let div = document.createElement('div');
-    div.className = 'item';
-    div.id = windowId;
-    let firstPage = document.createElement('div');
-    firstPage.className = 'firstPage';
-    let otherPages = document.createElement('div');
-    otherPages.className = 'otherPages';
     let overlay = document.createElement('div');
     overlay.className = 'overlay';
 
-    let favImg = document.createElement('img');
-    favImg.id = first.tabId;
-    favImg.className = 'favImg';
-    favImg.classList.add(first.index);
-    favImg.alt = first.url;
-    let itemTitle = document.createElement('p');
-    itemTitle.className = 'itemTitle';
+    itemDiv.addEventListener("mouseover",Events.handleItemHover);
+    itemDiv.addEventListener("mouseout",Events.handleItemHover);
+    overlay.addEventListener("click",Events.handleItemClicked);
 
-    let btnDiv = document.createElement('div');
-    btnDiv.className = 'btnDiv';
-    let closeBtn = document.createElement('button');
-    closeBtn.id = 0;
-    closeBtn.className = 'closeBtn';
-    closeBtn.textContent = 'close ❌';
-    let saveBtn = document.createElement('button');
-    saveBtn.id = 1;
-    saveBtn.className = 'saveBtn';
-    saveBtn.textContent='save ♻';
-    closeBtn.addEventListener("click",Events.handleBtnClick)
-    saveBtn.addEventListener("click",Events.handleBtnClick)
+    itemDiv.appendChild(addButtons(saved));
+    itemDiv.appendChild(overlay);
+    itemDiv.appendChild(headerDiv);
+    itemDiv.appendChild(bodyDiv);
 
-    btnDiv.appendChild(saveBtn);
-    btnDiv.appendChild(closeBtn);
-    div.appendChild(btnDiv);
-
-    favImg.src = first.favIcon;
-    firstPage.appendChild(favImg);
-    itemTitle.textContent = first.title;
-    firstPage.appendChild(itemTitle);
-
-    if (tabList){
-        tabList.forEach(({favIcon,tabId,url,index})=>{
-            let img = document.createElement('img');
-            img.className = 'favImg';
-            img.classList.add(index);
-            img.src = favIcon;
-            img.id = tabId;
-            img.alt = url;
-            otherPages.appendChild(img);
-        });
-    }
-
-    div.appendChild(overlay);
-    div.appendChild(firstPage);
-    div.appendChild(otherPages);
-
-    div.addEventListener("mouseover",Events.handleItemHover);
-    div.addEventListener("mouseout",Events.handleItemHover);
-    overlay.addEventListener("click",(ev)=>Events.handleItemClicked(ev,windowId))
-
-    if (mode)
-        container2.appendChild(div);
+    if(!saved)
+        currentWindows.appendChild(itemDiv);
     else
-        container1.appendChild(div);
+        savedWindows.appendChild(itemDiv);
 }
 
-export function appendItem(windowId,tab){
-    let parent = document.getElementById(windowId);
-    let child = document.createElement('img');
-    child.src = tab.favIconUrl;
-    child.id = tab.id;
-    child.className = 'favImg';
-    parent.childNodes[3].appendChild(child);
+function makeHeader(id,favIconUrl,title){
+    let div = document.createElement('div');
+    div.className = 'headerDiv';
+    let img = document.createElement('img');
+    img.className = 'favImg';
+    let span = document.createElement('span');
+
+    img.id=String(id)+'t'
+    img.src = favIconUrl;
+    span.textContent = title;
+    div.appendChild(img);
+    div.appendChild(span);
+    return div;
 }
 
-function makeBoard(){
-    getWindows().then(windowList=>{
-        windowList.forEach(({windowId,tabs})=>{
-            makeContainer(windowId,tabs,false);
-        })
-    });
-    getSavedWindows().then(data=>{
-        data.forEach((element)=>{
-            makeContainer(element.windowId,element);
-        })
-    });
-}
+function addButtons(saved){
+    let btnsDiv = document.createElement('div');
+    btnsDiv.className = 'btnsDiv';
+    if (saved){ //making saved windows
+        let openBtn = document.createElement('button');
+        let delBtn = document.createElement('button');
 
+        openBtn.id = -1;
+        openBtn.textContent = 'open ✅';
+
+        delBtn.id = 0;
+        delBtn.textContent = "delete 🗑";
+        delBtn.addEventListener("click",Events.handleBtnClicked)
+
+        btnsDiv.appendChild(openBtn);
+        btnsDiv.appendChild(delBtn);
+    }else{ //making current windows
+        let saveBtn = document.createElement('button');
+        let closeBtn = document.createElement('button');
+        
+        saveBtn.id = 2;
+        saveBtn.className = 'saveBtn';
+        saveBtn.textContent='save ♻';
+        closeBtn.id = 1;
+        closeBtn.className = 'closeBtn';
+        closeBtn.textContent = 'close ❌';
+        
+        saveBtn.addEventListener("click",Events.handleBtnClicked)
+        closeBtn.addEventListener("click",Events.handleBtnClicked)
+
+        btnsDiv.appendChild(saveBtn);
+        btnsDiv.appendChild(closeBtn);
+    }
+    return btnsDiv;
+}
 function init(){
-    makeBoard();
+    getWindows().then(()=>{
+        for(const [windowId,{tabs}] of Object.entries(allWindows))
+            makeItem(windowId,tabs);
+    });
+    getSaved().then(savedWindows=>{
+        savedWindows.forEach(({windowId,tabs})=>{
+            makeItem(String(windowId)+'s',tabs,false,true);
+        });
+    })
     Events.handleWindowEvent();
     Events.handleTabEvent();
 }
 
-
 init();
+
+export {UNKNOWN_PATH,allWindows,makeItem}

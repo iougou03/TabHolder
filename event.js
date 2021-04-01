@@ -1,7 +1,8 @@
-import {makeContainer,appendItem,UNKNOWN_PATH} from "./board.js"; 
+import {allWindows,UNKNOWN_PATH,makeItem} from "./board.js"; 
 
-function handleItemClicked(ev,windowId){
-    chrome.windows.update(windowId,{focused:true});
+function handleItemClicked(ev){
+    let id = Number(ev.currentTarget.parentNode.id);
+    chrome.windows.update(id,{focused:true});
 }
 
 function handleItemHover(ev){
@@ -24,94 +25,107 @@ function handleItemHover(ev){
 function handleWindowEvent(){
     chrome.windows.onCreated.addListener(({id})=>{
         chrome.windows.get(id,{populate:true},({tabs})=>{
-            // console.log(tabs);
-            makeContainer(id,tabs,false)
+            console.log(tabs);
+        ////////////////////////////////////////need work/////////////////////////////////
         })
     })
     chrome.windows.onRemoved.addListener(windowId=>{
-        document.getElementById(windowId).remove();
+        document.getElementById(String(windowId)).remove();
         console.log("removed");
     });
 }
 
 function handleTabEvent(){
-    chrome.tabs.onCreated.addListener(({windowId,id,favIconUrl,url})=>{
-        if (!favIconUrl)
-            favIconUrl = UNKNOWN_PATH;
-        let tab = {id,favIconUrl,url}
-        appendItem(windowId,tab);
-    })
-    chrome.tabs.onRemoved.addListener(tabId=>{
-        document.getElementById(tabId).remove();
-    });
-    // chrome.tabs.onMoved.addListener((tabId,moveInfo)=>{
-    //     let fromDiv = document.getElementById(tabId);
-    //     let parent;
-    //     let toDiv; 
-    //     if(moveInfo.fromIndex == 0){
-    //         parent = fromDiv.parentNode.parentNode.childNodes[3] //otherpages
-    //     }
-    //     else if(moveInfo.toIndex == 0){
-    //         parent = fromDiv.parentNode.parentNode.childNodes[2] //firstpage
-    //     }
-    //     console.log(tabId,moveInfo,parent)
-        
-    // });
-    chrome.tabs.onUpdated.addListener((tabId,{favIconUrl},{})=>{
-        if(favIconUrl){
-            chrome.tabs.get(tabId,()=>{
-                let searchFav = document.getElementById(tabId);
-                if (!favIconUrl)
-                    favIconUrl = UNKNOWN_PATH;
-                searchFav.src=favIconUrl;
-                })
+    chrome.tabs.onCreated.addListener((tab)=>{
+        if (tab.windowId in allWindows){
+            let bodyDiv = document.getElementById(tab.windowId).childNodes[3];
+            let img = document.createElement('img');
+            let tabs = allWindows[String(tab.windowId)].tabs;
+
+            img.id = String(tab.id)+'t'
+            img.className = 'favImg';
+            if (!tab.favIconUrl)
+                tab.favIconUrl = UNKNOWN_PATH;
+            img.src = tab.favIconUrl;
+            img.alt = tab.title;
+
+            if (tab.index !== tabs.length-1){
+                bodyDiv.insertBefore(img,bodyDiv.childNodes[tab.index-1]);
+            } else{
+                bodyDiv.appendChild(img);
             }
+
+            tabs.splice(tab.index,0,tab);
+            console.log(allWindows[String(tab.windowId)])
         }
-    );
-}
+    })
+    chrome.tabs.onRemoved.addListener((tabId,{isWindowClosing,windowId})=>{
+        if(!isWindowClosing){
+            let tabImg = document.getElementById(String(tabId)+'t');
+            windowId = String(windowId);
 
-function handleBtnClick(ev){
-    let num = Number(ev.target.id);
-    let windowId = Number(ev.currentTarget.parentNode.parentNode.id); 
-    if (num){ // click save button
-        let searchWindow = document.getElementById(windowId)
-        let first = searchWindow.children[2];
-        let others = searchWindow.children[3];
-        let tabIdList = [first.children[0].id];
-        let favList = [first.children[0].src];
-        let urlList  =[first.children[0].alt];
-
-        console.log(searchWindow,first,others,others.children.length )
-        // console.log(first.children[0].id,first.children[0].src,first.children[0].alt)
-
-        if(others.children.length !== 0){
-            let children =Array.from(others.children);
-            // console.log(children);
-            children.forEach(img => {
-                console.log(img.id,img.src,img.alt);
-                tabIdList.push(img.id);
-                favList.push(img.src);
-                urlList.push(img.alt);
+            tabImg.remove()
+            allWindows[windowId].tabs.find((tab,index)=>{
+                if (tab.id === tabId){
+                    console.log("find");
+                    return allWindows[windowId].tabs.splice(index,1);
+                }
             });
+            console.log(allWindows[windowId]);
         }
-
-        let saveData = {
-            windowId,
-            tabIdList,
-            favList,
-            urlList
-        }
-        chrome.storage.local.get(['data'],({data})=>{
-            // console.log(data)
-            data.push(saveData);
-            chrome.storage.local.set({data},()=>{
-                alert("saved");
-            });
+    });
+    chrome.tabs.onMoved.addListener((tabId,moveInfo)=>{
+////////////////////////////////////////need work/////////////////////////////////
+        console.log(tabId,moveInfo,parent)
+    });
+    chrome.tabs.onUpdated.addListener((tabId,{favIconUrl},{})=>{
+////////////////////////////////////////need work/////////////////////////////////
+        // if(favIconUrl){
+        //     chrome.tabs.get(tabId,()=>{
+        //         let searchFav = document.getElementById(tabId);
+        //         if (!favIconUrl)
+        //             favIconUrl = UNKNOWN_PATH;
+        //         searchFav.src=favIconUrl;
+        //         })
+        //     }
         });
-        
-    } else{
-        chrome.windows.remove(windowId);
-    }
-
 }
-export {handleItemClicked, handleItemHover, handleWindowEvent,handleBtnClick,handleTabEvent};
+
+function handleBtnClicked(ev){
+    let num = Number(ev.target.id);
+    let windowId = ev.currentTarget.parentNode.parentNode.id; 
+    if (num === 2){ // click save button
+        chrome.windows.remove(Number(windowId));
+        changeSaved(windowId,num);
+        makeItem(windowId+"s",allWindows[Number(windowId)].tabs,false,true);
+    } else if (num === 1){ // click close button
+        chrome.windows.remove(Number(windowId));
+    } else if (num===0){ //click delete button
+        changeSaved(windowId,num);
+        document.getElementById(windowId).remove();
+    } else{ //click open button
+    ////////////////////////////////////////need work/////////////////////////////////
+    }
+}
+
+function changeSaved(windowId,mode){ // mode 2 -> save, 0 -> delete
+    chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
+        if (mode === 2){
+            savedWindows.push(allWindows[windowId]);
+            delete allWindows[windowId]
+        } else{ //saved windows have letter s with their id
+            savedWindows.find((element,index)=>{
+                if(element.windowId == Number(windowId.slice(0,-1))){
+                    savedWindows.splice(index,1);
+                    delete allWindows[windowId.slice(0,-1)];
+                    return
+                };
+            })
+        }
+        chrome.storage.local.set({savedWindows},()=>{
+            console.log(`saved data => `,savedWindows,'\n',allWindows);
+        }); 
+            
+    });
+}
+export {handleItemClicked, handleItemHover, handleBtnClicked, handleWindowEvent, handleTabEvent, allWindows};

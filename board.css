@@ -2,23 +2,23 @@
     box-sizing: border-box;
 }
 .board{
-
     display: grid;
-    grid-template-rows: auto 10px auto;
+    grid-template-rows: auto auto auto;
     padding: 10px;
+    justify-content: center;
 }
 .container{
     display: flex;
     flex-direction: column;
 }
-.item{
+.itemDiv{
     width:280px;
     position: relative;
     margin-top: 10px;
     border:1px black solid;
     transition: 0.1s ease-out;
 }
-.item:hover{
+.itemDiv:hover{
     transform:scale(1.03);
     transition: 0.1s ease-in;
 }
@@ -32,7 +32,7 @@
 .darker{
     transition:0.3s ease;
 }
-.otherPages{
+.bodyDiv{
     display:flex;
     flex-wrap:wrap;
 }
@@ -43,8 +43,19 @@
     border: 0.5px black solid;
     padding:1px;
 }
-.btnDiv{
+.btnsDiv{
     opacity: 0;
     position: absolute;
     z-index: 2;
+}
+.horizon_line{
+    margin: auto;
+}
+.horizon_line > div{
+    margin: 15px 0 5px 0;
+    /* padding: 100px 50px 30px 50px; */
+    background-color: black;
+    width: 80px;
+    height: 3px;
+    border-radius: 20%;
 }
