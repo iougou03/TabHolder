@@ -117,11 +117,6 @@ function handleTabEvent(){
                 tabDiv.classList.add('loading');
             }
         }
-        else{ //tab created
-////////////////////////////////////////need work/////////////////////////////////
-            console.log("tab created");
-        }
-        
             
     });
 }
@@ -137,23 +132,25 @@ function handleBtnClicked(ev){
         chrome.windows.remove(Number(windowId));
     } else if (num===0){ //click delete button
         changeSavedWindows(windowId,num);
-        document.getElementById(windowId).remove();
+        document.getElementById(windowId).parentNode.remove();
     } else{ //click open button
+        getSavedWindow(windowId.slice(0,-1));
+        changeSavedWindows(windowId,num);
+        document.getElementById(windowId).parentNode.remove();
     ////////////////////////////////////////need work/////////////////////////////////
     }
 }
 
 function changeSavedWindows(windowId,mode){ 
     chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
-        if (mode === 2){ // mode 2 -> save, 0 -> delete
+        if (mode === 2){ // mode 2 -> save, -1 & 0 -> delete
             savedWindows.push(allWindows[windowId]);
             deleteWindowFromAllWindows(windowId);
         } else{ //saved windows have letter s with their id
             savedWindows.find((element,index)=>{
                 if(element.windowId == Number(windowId.slice(0,-1))){
                     savedWindows.splice(index,1);
-                    deleteWindowFromAllWindows(windowId.slice(0,-1));
-                    return
+                    return deleteWindowFromAllWindows(windowId.slice(0,-1));
                 };
             })
         }
@@ -162,6 +159,24 @@ function changeSavedWindows(windowId,mode){
         }); 
             
     });
+}
+
+function getSavedWindow(windowId){
+    let findWindowId = Number(windowId);
+    chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
+        console.log(findWindowId,savedWindows);
+        savedWindows.find((savedInfo)=>{
+            if (savedInfo.windowId === findWindowId)
+                return openSavedWindow(savedInfo.tabs);
+        })
+    });
+    function openSavedWindow(tabs){
+        let tabUrlList = [];
+        tabs.forEach(({url})=>{
+            tabUrlList.push(url);
+        });
+        chrome.windows.create({focused:true,url:tabUrlList,left:300});
+    }
 }
 
 function addWindow2AllWindows(id,tabs){

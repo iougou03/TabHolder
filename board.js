@@ -111,6 +111,7 @@ function addButtons(saved){
 
         openBtn.id = -1;
         openBtn.textContent = 'open ✅';
+        openBtn.addEventListener("click",Events.handleBtnClicked);
 
         delBtn.id = 0;
         delBtn.textContent = "delete 🗑";
@@ -153,6 +154,7 @@ function init(){
     makeBoard();
     Events.handleWindowEvent();
     Events.handleTabEvent();
+    console.log(allWindows);
 }
 
 init();
