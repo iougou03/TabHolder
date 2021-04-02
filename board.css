@@ -14,9 +14,9 @@
 .itemDiv{
     width:280px;
     position: relative;
-    margin-top: 10px;
     border:1px black solid;
     transition: 0.1s ease-out;
+    cursor: pointer;
 }
 .itemDiv:hover{
     transform:scale(1.03);
@@ -26,7 +26,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color:rgba(0, 0, 0,0.6);
+    background-color:rgba(0, 0, 0, 0.6);
     opacity: -1;
 }
 .darker{
@@ -58,4 +58,24 @@
     width: 80px;
     height: 3px;
     border-radius: 20%;
+}
+.loading{
+    border-color: red;
+    color:red;
+}
+
+/* ↓ drag and drop */
+.invisible{
+    opacity: 0;
+}
+.hold{
+    border: cadetblue 3px dotted;
+}
+.wrapper{
+    opacity: 1;
+    margin-top: 10px;
+    background-color: white;
+}
+.over{
+    background-color: rgb(57, 149, 255);
 }
