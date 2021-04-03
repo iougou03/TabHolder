@@ -30,19 +30,21 @@ async function getSaved(){
 }
 
 function makeItem(windowId,tabs,moved= false,saved=false){
-    let wrapper = document.createElement('div');
-    wrapper.className = 'wrapper';
-    let itemDiv;
+    let wrapper;
+    let itemDiv = document.createElement('div');
     if (!moved){
-        itemDiv = document.createElement('div');
-        itemDiv.id = windowId;
-        itemDiv.className = 'itemDiv';
+        wrapper = document.createElement('div');
+        wrapper.className = 'wrapper';
     } else{
-        itemDiv = document.getElementById(windowId);
-        itemDiv.textContent = '';
+        let oldItemDiv = document.getElementById(windowId);
+        wrapper = oldItemDiv.parentNode;
+        oldItemDiv.remove(); 
     }
     let headerDiv;
     let bodyDiv = document.createElement('div');
+
+    itemDiv.id = windowId;
+    itemDiv.className = 'itemDiv';
     bodyDiv.className = 'bodyDiv';
 
     tabs.forEach((tab,index)=>{
@@ -66,25 +68,42 @@ function makeItem(windowId,tabs,moved= false,saved=false){
     itemDiv.addEventListener("mouseover",Events.handleItemHover);
     itemDiv.addEventListener("mouseout",Events.handleItemHover);
     itemDiv.draggable = true;
-    itemDiv.addEventListener("dragstart",Events.dragStrat);
-    itemDiv.addEventListener("dragend",Events.dragEnd)
-    wrapper.addEventListener("dragover",Events.dragOver);
-    wrapper.addEventListener("dragenter",Events.dragEnter);
-    wrapper.addEventListener("dragleave",Events.dragLeave)
-    wrapper.addEventListener("drop",Events.drop);
+    if(!saved){
+        itemDiv.addEventListener("dragstart",Events.dragStrat);
+        itemDiv.addEventListener("dragend",Events.dragEnd)
+        wrapper.addEventListener("dragover",Events.dragOver);
+        wrapper.addEventListener("dragenter",Events.dragEnter);
+        wrapper.addEventListener("dragleave",Events.dragLeave)
+        wrapper.addEventListener("drop",Events.drop);
+    }
 
     itemDiv.appendChild(addButtons(saved));
     itemDiv.appendChild(overlay);
     itemDiv.appendChild(headerDiv);
     itemDiv.appendChild(bodyDiv);
-
     wrapper.appendChild(itemDiv);
+
     if(!saved){
         overlay.addEventListener("click",Events.handleItemClicked);
-        currentWindows.appendChild(wrapper);
+        if(!moved)
+            currentWindows.appendChild(wrapper);
     }
-    else
-        savedWindows.appendChild(wrapper);
+    else{
+        let nameDiv = makeSavedWindowNameDiv();
+        itemDiv.classList.add('savedWindow');
+        wrapper.insertBefore(nameDiv,itemDiv);
+        savedWindows.appendChild(wrapper);    
+    }
+}
+function makeSavedWindowNameDiv(){
+    let nameDiv = document.createElement('div');
+    let name = document.createElement('div');
+    nameDiv.className = 'savedWindowNameDiv';
+    nameDiv.appendChild(name);
+    nameDiv.appendChild(document.createElement('div'))
+    name.textContent = 'name';
+
+    return nameDiv;
 }
 
 function makeHeader(id,favIconUrl,title){

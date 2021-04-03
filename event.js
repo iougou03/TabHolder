@@ -1,4 +1,6 @@
 import {allWindows,UNKNOWN_PATH,makeItem} from "./board.js"; 
+const DO_NOT_ACTIVE_MOVE = false
+const ACTIVE_MOVE = true
 let dragStarter;
 
 function handleItemClicked(ev){
@@ -10,15 +12,20 @@ function handleItemHover(ev){
     let type = ev.type;
     let btns = ev.currentTarget.childNodes[0];
     let overlay = ev.currentTarget.childNodes[1];
+    let nameDiv = ev.currentTarget.parentNode.childNodes[0];
+
     if (type == 'mouseover'){   
         overlay.style.opacity = 1;
         overlay.classList.add("darker");
         btns.style.opacity = 1;
+        nameDiv.style.transform = 'scale(1.03)';
+        nameDiv.style.transition= '0.1s ease-in';
     }
     else{
         overlay.style.opacity = 0;
         overlay.classList.remove("darker");
         btns.style.opacity = 0;
+        nameDiv.style.transform = 'scale(1)';
     }
         
 }
@@ -28,12 +35,13 @@ function handleWindowEvent(){
         chrome.windows.get(id,{populate:true},({tabs})=>{
             makeItem(id,tabs);
             addWindow2AllWindows(id,tabs);
-            console.log("window created");
+            console.log("window created\n",allWindows);
         })        
     });
     chrome.windows.onRemoved.addListener(windowId=>{
         document.getElementById(String(windowId)).parentNode.remove();
-        console.log("window removed");
+        deleteWindowFromAllWindows(windowId);
+        console.log("window removed",allWindows);
     });
 }
 
@@ -62,11 +70,10 @@ function handleTabEvent(){
         }
     })
     chrome.tabs.onRemoved.addListener((tabId,{isWindowClosing,windowId})=>{
-        console.log('whjat');
         if(!isWindowClosing){
             let tabImg = document.getElementById(String(tabId)+'t');
             windowId = String(windowId);
-
+            
             tabImg.remove()
             allWindows[windowId].tabs.find((tab,index)=>{
                 if (tab.id === tabId){
@@ -77,24 +84,60 @@ function handleTabEvent(){
             // console.log(allWindows[windowId]);
         }
     });
-    chrome.tabs.onAttached.addListener((tabId,attachInfo)=>{
-////////////////////////////////////////need work/////////////////////////////////
-        console.log("window attached",tabId,attachInfo);
+
+    let attachStatus = ACTIVE_MOVE
+    
+    chrome.tabs.onAttached.addListener((tabId,{newPosition,newWindowId})=>{
+        console.log("tab attached",tabId,newPosition);
+        if(newWindowId in allWindows){
+            attachStatus = DO_NOT_ACTIVE_MOVE;
+            chrome.tabs.get(tabId,(tab)=>{
+                console.log(newWindowId,tab.index);
+                allWindows[newWindowId].tabs.splice(tab.index,0,tab);
+                makeItem(newWindowId,allWindows[newWindowId].tabs,true);
+                attachStatus = ACTIVE_MOVE;
+            })
+        } else{ //window created or go attach at index 0
+            attachStatus = ACTIVE_MOVE;
+        }
     })
-    chrome.tabs.onDetached.addListener((tabId,detachInfo)=>{ //invoke with each tab
-////////////////////////////////////////need work/////////////////////////////////
-        console.log("window detached",tabId,detachInfo);
+    chrome.tabs.onDetached.addListener((tabId,{oldPosition,oldWindowId})=>{ //invoke with each tab
+        console.log("tab detached",tabId);
+
+        let tabs = allWindows[oldWindowId].tabs;
+        tabs.splice(oldPosition,1); 
+        
+        if(tabs.length !== 0){
+            if(oldPosition===0)
+                makeItem(oldWindowId,tabs,true);
+            else
+                document.getElementById(tabId+'t').remove();
+        }
     })
+
     chrome.tabs.onMoved.addListener((tabId,moveInfo)=>{
-////////////////////////////////////////need work/////////////////////////////////
-        console.log("window moved\n",tabId,moveInfo,parent)
+        console.log('moved',moveInfo.fromIndex,moveInfo.toIndex);
+        let fromIndex = moveInfo.fromIndex;
+        let toIndex = moveInfo.toIndex;
+        let gap = toIndex - fromIndex;
+        if(attachStatus){
+            let arr = allWindows[moveInfo.windowId].tabs
+            if (arr){
+                [arr[fromIndex],arr[toIndex]] = [arr[toIndex],arr[fromIndex]];
+                makeItem(String(moveInfo.windowId),arr,true,false);
+            }
+        }else if(gap > 1)
+            attachStatus = DO_NOT_ACTIVE_MOVE;
+        else
+            attachStatus = ACTIVE_MOVE;
+        
     });
     chrome.tabs.onUpdated.addListener((tabId,{},tab)=>{
         let statusOfTab = true; let i = 1;
         
         allWindows[tab.windowId].tabs.find((t,index)=>{
             if (t.id === tabId){
-                console.log("find"); statusOfTab =false
+                statusOfTab =false
                 if(index == 0) i = 0;                    
                 return allWindows[tab.windowId].tabs.splice(index,1,tab);
             }
@@ -109,7 +152,6 @@ function handleTabEvent(){
                     tabDiv.parentNode.childNodes[1].textContent = tab.title;
                     tabDiv.parentNode.childNodes[1].classList.remove('loading');
                 }
-
                 tabDiv.classList.remove('loading');
                 tabDiv.src = tab.favIconUrl;
             } else {
@@ -130,53 +172,40 @@ function handleBtnClicked(ev){
         makeItem(windowId+"s",allWindows[Number(windowId)].tabs,false,true);
     } else if (num === 1){ // click close button
         chrome.windows.remove(Number(windowId));
-    } else if (num===0){ //click delete button
-        changeSavedWindows(windowId,num);
+        deleteWindowFromAllWindows(windowId);
+    }else{ //click open button (-1) or click delete button (0)
         document.getElementById(windowId).parentNode.remove();
-    } else{ //click open button
-        getSavedWindow(windowId.slice(0,-1));
+        windowId = Number(windowId.slice(0,-1));
         changeSavedWindows(windowId,num);
-        document.getElementById(windowId).parentNode.remove();
-    ////////////////////////////////////////need work/////////////////////////////////
     }
 }
 
 function changeSavedWindows(windowId,mode){ 
     chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
-        if (mode === 2){ // mode 2 -> save, -1 & 0 -> delete
+        if (mode === 2){ // mode 2 -> save, -1 ->open, 0 -> delete
             savedWindows.push(allWindows[windowId]);
             deleteWindowFromAllWindows(windowId);
         } else{ //saved windows have letter s with their id
             savedWindows.find((element,index)=>{
-                if(element.windowId == Number(windowId.slice(0,-1))){
-                    savedWindows.splice(index,1);
-                    return deleteWindowFromAllWindows(windowId.slice(0,-1));
-                };
-            })
+                if(element.windowId === windowId){
+                    if(mode === -1)
+                        openSavedWindow(savedWindows[index]);
+                    return savedWindows.splice(index,1);
+                }
+            });
         }
         chrome.storage.local.set({savedWindows},()=>{
-            console.log(`saved data => `,savedWindows,'\n',allWindows);
+            console.log(`saved data => `,savedWindows);
         }); 
-            
     });
 }
 
-function getSavedWindow(windowId){
-    let findWindowId = Number(windowId);
-    chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
-        console.log(findWindowId,savedWindows);
-        savedWindows.find((savedInfo)=>{
-            if (savedInfo.windowId === findWindowId)
-                return openSavedWindow(savedInfo.tabs);
-        })
+function openSavedWindow({tabs}){
+    let tabUrlList = [];
+    tabs.forEach(({url})=>{
+        tabUrlList.push(url);
     });
-    function openSavedWindow(tabs){
-        let tabUrlList = [];
-        tabs.forEach(({url})=>{
-            tabUrlList.push(url);
-        });
-        chrome.windows.create({focused:true,url:tabUrlList,left:300});
-    }
+    chrome.windows.create({focused:true,url:tabUrlList,left:300});
 }
 
 function addWindow2AllWindows(id,tabs){
@@ -240,12 +269,8 @@ function drop(){
             chrome.windows.update(destinationWindowId,{focused:true})
             if(Array.isArray(movedTabs)){
                 chrome.tabs.update(movedTabs[0].id,{active:true});
-                movedTabs.forEach((element)=>{
-                    allWindows[String(destinationWindowId)].tabs.push(element);    
-                });
             } else{
                 chrome.tabs.update(movedTabs.id,{active:true});
-                allWindows[String(destinationWindowId)].tabs.push(movedTabs);
             }
             console.log(allWindows);
             // chrome.tabs.query(movedTabs{active:true})
@@ -269,4 +294,5 @@ export {
     dragEnter,
     dragLeave,
     drop,
+    
 };

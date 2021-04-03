@@ -1,5 +1,11 @@
 chrome.runtime.onInstalled.addListener(()=>{
-    chrome.storage.local.set({savedWindows:[]},()=>{
-        console.log("saved");
-    });
+    chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
+        if(savedWindows){
+            console.log('get');
+        }else{
+            chrome.storage.local.set({savedWindows:[]},()=>{
+                console.log("saved");
+            });
+        }
+    })
 })

@@ -53,7 +53,6 @@
 }
 .horizon_line > div{
     margin: 15px 0 5px 0;
-    /* padding: 100px 50px 30px 50px; */
     background-color: black;
     width: 80px;
     height: 3px;
@@ -78,4 +77,22 @@
 }
 .over{
     background-color: rgb(57, 149, 255);
+}
+
+/*  */
+.savedWindowNameDiv{
+    display: grid;
+    grid-template-columns: max-content auto;
+    transition:0.1s ease-in;
+}
+.savedWindowNameDiv div:nth-child(1){
+    border : black 1px solid;
+    border-bottom: none;
+    padding: 1px 10px 1px 10px;
+}
+.savedWindowNameDiv div:nth-child(2){
+    border-bottom: black 1px solid;
+}
+.savedWindow{
+    border-top: none;
 }
