@@ -56,6 +56,8 @@ function makeItem(windowId,tabs,moved= false,saved=false){
             let img = document.createElement('img');
             img.id = String(tab.id)+'t'
             img.className = 'favImg';
+            // if(index > 10)
+            //     img.classList.add('hide');
             img.src = tab.favIconUrl;
             img.alt = tab.title;
             bodyDiv.appendChild(img);
@@ -115,6 +117,10 @@ function makeHeader(id,favIconUrl,title){
 
     img.id=String(id)+'t'
     img.src = favIconUrl;
+    // if (title.length > 23){
+    //     title = title.slice(0,23)
+    //     title = title.slice(0,-1)+'...';
+    // }
     span.textContent = title;
     div.appendChild(img);
     div.appendChild(span);

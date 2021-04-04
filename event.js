@@ -18,7 +18,7 @@ function handleItemHover(ev){
         overlay.style.opacity = 1;
         overlay.classList.add("darker");
         btns.style.opacity = 1;
-        nameDiv.style.transform = 'scale(1.03)';
+        nameDiv.style.transform = 'scale(1.025)';
         nameDiv.style.transition= '0.1s ease-in';
     }
     else{
@@ -219,7 +219,9 @@ function deleteWindowFromAllWindows(key){
 }
 
 function dragStrat(ev){
-    this.parentNode.classList.add('hold');
+    ev.stopPropagation();
+
+    // this.parentNode.classList.add('hold');
     this.childNodes[0].style.opacity = 0 // btns
     this.childNodes[1].classList.remove('darker');
     this.childNodes[1].style.opacity = 0//overlay
@@ -230,7 +232,7 @@ function dragStrat(ev){
 }
 function dragEnd(){
     this.classList.remove('invisible')
-    this.parentNode.classList.remove('hold');
+    // this.parentNode.classList.remove('hold');
 }
 function dragOver(ev){
     ev.preventDefault();
@@ -253,30 +255,31 @@ function drop(){
             tabsIdList.push(id);
         });
         //this.childNodes[0] -> destination itmeDiv
-        
-        chrome.tabs.move(tabsIdList,{index:-1,windowId:destinationWindowId},(movedTabs)=>{
-            let headerDiv = dragStarter.childNodes[2];
-            let bodyDiv = dragStarter.childNodes[3].childNodes;
-            this.childNodes[0].childNodes[3].appendChild(headerDiv.childNodes[0]);
-            if (bodyDiv){
-                bodyDiv.forEach((tabDiv)=>{
-                    this.childNodes[0].childNodes[3].appendChild(tabDiv);
-                });
-            }
-
-            deleteWindowFromAllWindows(currentWindowId);
-            dragStarter="";
-            chrome.windows.update(destinationWindowId,{focused:true})
-            if(Array.isArray(movedTabs)){
-                chrome.tabs.update(movedTabs[0].id,{active:true});
-            } else{
-                chrome.tabs.update(movedTabs.id,{active:true});
-            }
-            console.log(allWindows);
-            // chrome.tabs.query(movedTabs{active:true})
-        })
-    }catch{
-
+        if(destinationWindowId != currentWindowId){
+            chrome.tabs.move(tabsIdList,{index:-1,windowId:destinationWindowId},(movedTabs)=>{
+                let headerDiv = dragStarter.childNodes[2];
+                let bodyDiv = dragStarter.childNodes[3].childNodes;
+                this.childNodes[0].childNodes[3].appendChild(headerDiv.childNodes[0]);
+                if (bodyDiv){
+                    bodyDiv.forEach((tabDiv)=>{
+                        this.childNodes[0].childNodes[3].appendChild(tabDiv);
+                    });
+                }
+    
+                deleteWindowFromAllWindows(currentWindowId);
+                dragStarter="";
+                chrome.windows.update(destinationWindowId,{focused:true})
+                if(Array.isArray(movedTabs)){
+                    chrome.tabs.update(movedTabs[0].id,{active:true});
+                } else{
+                    chrome.tabs.update(movedTabs.id,{active:true});
+                }
+                console.log(allWindows);
+                // chrome.tabs.query(movedTabs{active:true})
+            })
+        }
+    }catch(error){
+        console.log(error);
     }
     
 } //normal만 drop되게 하기
