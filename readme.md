@@ -11,3 +11,11 @@
 * (특히 노트북에서)메모리양을 줄이고 + 브라우저를 쾌적하게 하여 생산성을 늘리는 앱
 
 * WSL2 directory path : \\wsl$ 
+
+<hr></hr>
+
+## 2021.04.06 (02:16 am)
+
+First version(1.0) completed
+
+<img src="./images/readme_img/program cap.png">
