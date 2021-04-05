@@ -1,0 +1,31 @@
+.hide{
+    animation-name: disappear;
+    animation-duration:300ms;
+    animation-duration: ease-out;
+    animation-iteration-count: 1;
+
+    transform: scale(0);
+}
+.show{
+    animation-name: appear;
+    animation-duration:300ms;
+    animation-duration: ease-in;
+    animation-iteration-count: 1;
+
+    transform: scale(1);
+}
+
+@keyframes disappear{
+    0% {
+        -webkit-transform: scale(1);
+    } 100%{
+        -webkit-transform: scale(0);
+    }
+}
+@keyframes appear{
+    0% {
+        -webkit-transform: scale(0);
+    } 100%{
+        -webkit-transform: scale(1);
+    }
+}

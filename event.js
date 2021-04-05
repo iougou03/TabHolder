@@ -1,4 +1,5 @@
-import {allWindows,UNKNOWN_PATH,makeItem} from "./board.js"; 
+import {allWindows,UNKNOWN_PATH,makeItem,savedWindowsNames} from "./board.js"; 
+
 const DO_NOT_ACTIVE_MOVE = false
 const ACTIVE_MOVE = true
 let dragStarter;
@@ -39,7 +40,12 @@ function handleWindowEvent(){
         })        
     });
     chrome.windows.onRemoved.addListener(windowId=>{
-        document.getElementById(String(windowId)).parentNode.remove();
+        let wrapper =document.getElementById(String(windowId)).parentNode;
+        wrapper.classList.remove('show');
+        wrapper.classList.add('hide');
+        setInterval(()=>{
+            wrapper.remove();
+        },200);
         deleteWindowFromAllWindows(windowId);
         console.log("window removed",allWindows);
     });
@@ -72,16 +78,17 @@ function handleTabEvent(){
     chrome.tabs.onRemoved.addListener((tabId,{isWindowClosing,windowId})=>{
         if(!isWindowClosing){
             let tabImg = document.getElementById(String(tabId)+'t');
+            let itemDiv =tabImg.parentNode.parentNode
             windowId = String(windowId);
-            
-            tabImg.remove()
+
+            console.log(itemDiv)
             allWindows[windowId].tabs.find((tab,index)=>{
                 if (tab.id === tabId){
                     console.log("find");
                     return allWindows[windowId].tabs.splice(index,1);
                 }
             });
-            // console.log(allWindows[windowId]);
+            makeItem(windowId,allWindows[windowId].tabs,true)
         }
     });
 
@@ -145,12 +152,13 @@ function handleTabEvent(){
         if(!statusOfTab){ //tab refresh
             let tabDiv = document.getElementById(String(tabId)+'t');
             if(i===0)
-                tabDiv.parentNode.childNodes[1].classList.add('loading');
+                tabDiv.parentNode.childNodes[1].style.color = "red";
             if(tab.status==="complete"){
                 if(!tab.favIconUrl) tab.favIconUrl = UNKNOWN_PATH;
                 if(i===0){
+                    // headerDiv span
                     tabDiv.parentNode.childNodes[1].textContent = tab.title;
-                    tabDiv.parentNode.childNodes[1].classList.remove('loading');
+                    tabDiv.parentNode.childNodes[1].style.color ='#50586C';
                 }
                 tabDiv.classList.remove('loading');
                 tabDiv.src = tab.favIconUrl;
@@ -167,6 +175,7 @@ function handleBtnClicked(ev){
     let num = Number(ev.target.id);
     let windowId = ev.currentTarget.parentNode.parentNode.id; 
     if (num === 2){ // click save button
+        savedWindowsNames[windowId] = 'name';
         chrome.windows.remove(Number(windowId));
         changeSavedWindows(windowId,num);
         makeItem(windowId+"s",allWindows[Number(windowId)].tabs,false,true);
@@ -183,6 +192,7 @@ function handleBtnClicked(ev){
 function changeSavedWindows(windowId,mode){ 
     chrome.storage.local.get(['savedWindows'],({savedWindows})=>{
         if (mode === 2){ // mode 2 -> save, -1 ->open, 0 -> delete
+            allWindows[windowId].name = 'name';
             savedWindows.push(allWindows[windowId]);
             deleteWindowFromAllWindows(windowId);
         } else{ //saved windows have letter s with their id
@@ -256,27 +266,33 @@ function drop(){
         });
         //this.childNodes[0] -> destination itmeDiv
         if(destinationWindowId != currentWindowId){
-            chrome.tabs.move(tabsIdList,{index:-1,windowId:destinationWindowId},(movedTabs)=>{
-                let headerDiv = dragStarter.childNodes[2];
-                let bodyDiv = dragStarter.childNodes[3].childNodes;
-                this.childNodes[0].childNodes[3].appendChild(headerDiv.childNodes[0]);
-                if (bodyDiv){
-                    bodyDiv.forEach((tabDiv)=>{
-                        this.childNodes[0].childNodes[3].appendChild(tabDiv);
-                    });
-                }
-    
-                deleteWindowFromAllWindows(currentWindowId);
-                dragStarter="";
-                chrome.windows.update(destinationWindowId,{focused:true})
-                if(Array.isArray(movedTabs)){
-                    chrome.tabs.update(movedTabs[0].id,{active:true});
+            chrome.tabs.query({windowId:destinationWindowId,windowType:"normal"},(tab)=>{
+                if(tab.length !== 0){
+                    chrome.tabs.move(tabsIdList,{index:-1,windowId:destinationWindowId},(movedTabs)=>{
+                        let headerDiv = dragStarter.childNodes[2];
+                        let bodyDiv = dragStarter.childNodes[3].childNodes;
+                        this.childNodes[0].childNodes[3].appendChild(headerDiv.childNodes[0]);
+                        if (bodyDiv){
+                            bodyDiv.forEach((tabDiv)=>{
+                                this.childNodes[0].childNodes[3].appendChild(tabDiv);
+                            });
+                        }
+            
+                        deleteWindowFromAllWindows(currentWindowId);
+                        dragStarter="";
+                        chrome.windows.update(destinationWindowId,{focused:true})
+                        if(Array.isArray(movedTabs)){
+                            chrome.tabs.update(movedTabs[0].id,{active:true});
+                        } else{
+                            chrome.tabs.update(movedTabs.id,{active:true});
+                        }
+                        console.log(allWindows);
+                        // chrome.tabs.query(movedTabs{active:true})
+                    })
                 } else{
-                    chrome.tabs.update(movedTabs.id,{active:true});
+                    alert("you cannot move to this window");
                 }
-                console.log(allWindows);
-                // chrome.tabs.query(movedTabs{active:true})
-            })
+            })  
         }
     }catch(error){
         console.log(error);
@@ -297,5 +313,5 @@ export {
     dragEnter,
     dragLeave,
     drop,
-    
+    savedWindowsNames,
 };

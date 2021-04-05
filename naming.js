@@ -1,7 +1,0 @@
-function modifyName(){
-
-}
-
-function openModifyWindow(){
-    
-}

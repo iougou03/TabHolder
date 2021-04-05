@@ -1,9 +1,11 @@
 import * as Events from "./event.js";
+import {makeSavedWindowNameDiv} from "./nameing.js";
 
 const UNKNOWN_PATH = "./images/unknown.png";
 const currentWindows = document.getElementById('currentWindows');
 const savedWindows = document.getElementById('savedWindows');
 let allWindows = {}; // allWindows[windowId] = {windowId,tabs}
+let savedWindowsNames = {};
 
 async function getWindows(){  
 
@@ -46,6 +48,7 @@ function makeItem(windowId,tabs,moved= false,saved=false){
     itemDiv.id = windowId;
     itemDiv.className = 'itemDiv';
     bodyDiv.className = 'bodyDiv';
+    wrapper.classList.add('show');
 
     tabs.forEach((tab,index)=>{
         if(!tab.favIconUrl)
@@ -91,21 +94,11 @@ function makeItem(windowId,tabs,moved= false,saved=false){
             currentWindows.appendChild(wrapper);
     }
     else{
-        let nameDiv = makeSavedWindowNameDiv();
+        let nameDiv = makeSavedWindowNameDiv(windowId);
         itemDiv.classList.add('savedWindow');
         wrapper.insertBefore(nameDiv,itemDiv);
         savedWindows.appendChild(wrapper);    
     }
-}
-function makeSavedWindowNameDiv(){
-    let nameDiv = document.createElement('div');
-    let name = document.createElement('div');
-    nameDiv.className = 'savedWindowNameDiv';
-    nameDiv.appendChild(name);
-    nameDiv.appendChild(document.createElement('div'))
-    name.textContent = 'name';
-
-    return nameDiv;
 }
 
 function makeHeader(id,favIconUrl,title){
@@ -170,7 +163,8 @@ function makeBoard(){
             makeItem(windowId,tabs);
     });
     getSaved().then(savedWindows=>{
-        savedWindows.forEach(({windowId,tabs})=>{
+        savedWindows.forEach(({windowId,tabs,name})=>{
+            savedWindowsNames[windowId] = name;
             makeItem(String(windowId)+'s',tabs,false,true);
         });
     })
@@ -184,4 +178,4 @@ function init(){
 
 init();
 
-export {UNKNOWN_PATH,allWindows,makeItem}
+export {UNKNOWN_PATH,allWindows,makeItem,savedWindowsNames}
