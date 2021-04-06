@@ -1,6 +1,7 @@
 import * as Events from "./event.js";
 import {makeSavedWindowNameDiv} from "./nameing.js";
 
+
 const UNKNOWN_PATH = "./images/unknown.png";
 const currentWindows = document.getElementById('currentWindows');
 const savedWindows = document.getElementById('savedWindows');
@@ -175,6 +176,7 @@ function init(){
     Events.handleTabEvent();
     console.log(allWindows);
 }
+
 
 init();
 

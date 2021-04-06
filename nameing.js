@@ -7,14 +7,13 @@ function makeSavedWindowNameDiv(windowId){
     let name = document.createElement('div');
     nameDiv.className = 'savedWindowNameDiv';
     nameDiv.appendChild(name);
-    nameDiv.appendChild(document.createElement('div'))
-
+    
     if(board_name[windowId])
         name.innerText = board_name[windowId];
     else
         name.innerText = event_name[windowId];
 
-    nameDiv.addEventListener("click",(event)=>{openModifywindow(event.currentTarget,windowId)})
+    nameDiv.addEventListener("click",(event)=>{openModifywindow(event.currentTarget,windowId,name.innerText)})
 
     return nameDiv;
 }
@@ -32,12 +31,12 @@ function modifyName(changeName,windowId){
     });
 }
 
-function openModifywindow(nameDiv,windowId){
+function openModifywindow(nameDiv,windowId,previousName){
     let changeName;
     setTimeout(()=>{
-        changeName = prompt("type name if you want to change");
+        changeName = prompt("type name if you want to change",previousName);
         if (!changeName)
-            changeName = 'name';
+            changeName = previousName;
 
         let name =  nameDiv.childNodes[0];
         name.textContent = changeName;

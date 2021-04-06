@@ -121,7 +121,7 @@ body{
 /* nameBox styling */
 .savedWindowNameDiv{
     display: grid;
-    grid-template-columns: max-content auto 9px;
+    grid-template-columns: max-content 1fr;
     transition:0.1s ease-in;
 }
 .savedWindowNameDiv div:nth-child(1):hover{
@@ -130,6 +130,7 @@ body{
     color:white
 }
 .savedWindowNameDiv div:nth-child(1){
+    max-width: 280px;
     font-size:15px;
     border : black 1px solid;
     border-bottom: none;
