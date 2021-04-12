@@ -5,8 +5,20 @@ const ACTIVE_MOVE = true
 let dragStarter;
 
 function handleItemClicked(ev){
-    let id = Number(ev.currentTarget.parentNode.id);
-    chrome.windows.update(id,{focused:true});
+    let itemDiv = ev.currentTarget.parentNode;
+    let id = Number(itemDiv.id);
+    if(itemDiv.classList.toggle('clicked')){
+        console.log("click once")
+        chrome.windows.update(id,{
+            focused:true,
+            });
+    } else{
+        console.log("click twice")
+        chrome.windows.update(id,{
+            drawAttention:true,
+            focused:false,
+            state:"minimized"});
+    }
 }
 
 function handleItemHover(ev){
