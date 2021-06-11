@@ -33,6 +33,7 @@ async function getSaved(){
 }
 
 function makeItem(windowId,tabs,moved= false,saved=false){
+    if(tabs.length === 0 )return
     let wrapper;
     let itemDiv = document.createElement('div');
     if (!moved){
