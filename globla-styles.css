@@ -59,12 +59,11 @@ table {
   display: flex;
   flex-direction: column;
 }
-window-item:not(:last-child){
-  margin-bottom: 1rem;
-}
 .item-container{
+  margin:10px 10px 0 10px;
   background-color: rgb(197, 197, 197);
   padding:1rem;
+  border-radius: 5px;
 }
 .header-container{
   display: flex;

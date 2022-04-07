@@ -31,8 +31,8 @@
     "commands": {
       "open-app": {
         "suggested_key": {
-          "default": "Ctrl+Shift+H",
-          "mac": "Command+Shift+H"
+          "default": "Ctrl+Shift+0",
+          "mac": "Command+Shift+0"
         },
         "description": "Open tab holder app instantly"
       }
