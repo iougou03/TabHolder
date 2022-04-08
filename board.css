@@ -5,6 +5,9 @@
     font-family:  'Nanum Myeongjo', serif;
     font-weight: 600;
 }
+html {
+    width: 320px;
+}
 body{
     margin-top:0;
 }

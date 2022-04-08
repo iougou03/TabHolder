@@ -32,6 +32,15 @@ async function getSaved(){
     })
 }
 
+async function checkFaviconValid(url) {
+    fetch(url).then((result)=> {
+        console.log(result)
+    })
+    .catch((err)=> {
+        console.log(err)
+    })
+}
+
 function makeItem(windowId,tabs,moved= false,saved=false){
     let wrapper;
     let itemDiv = document.createElement('div');
@@ -52,6 +61,7 @@ function makeItem(windowId,tabs,moved= false,saved=false){
     wrapper.classList.add('show');
 
     tabs.forEach((tab,index)=>{
+        
         if(!tab.favIconUrl)
             tab.favIconUrl = UNKNOWN_PATH;
         if(index == 0)
@@ -63,7 +73,8 @@ function makeItem(windowId,tabs,moved= false,saved=false){
             // if(index > 10)
             //     img.classList.add('hide');
             img.src = tab.favIconUrl;
-            img.alt = tab.title;
+            // img.alt = tab.title;
+            img.alt = " ";
             bodyDiv.appendChild(img);
         }  
     });
